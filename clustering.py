@@ -17,30 +17,24 @@ for i in xrange(num_vectors):
 df = pd.DataFrame({"x": [v[0] for v in vector_values], 
                    "y": [v[1] for v in vector_values]})
 sns.lmplot("x", "y", data=df, fit_reg=False, size=7)
-plt.show()
+# plt.show()
 vectors = tf.constant(vector_values)
 centroids = tf.Variable(tf.slice(tf.random_shuffle(vectors), 
                                  [0,0],[num_clusters,-1]))
+print vectors.get_shape()
+print centroids.get_shape()
+
 expanded_vectors = tf.expand_dims(vectors, 0)
 expanded_centroids = tf.expand_dims(centroids, 1)
 
 print expanded_vectors.get_shape()
 print expanded_centroids.get_shape()
 
-distances = tf.reduce_sum(
-  tf.square(tf.sub(expanded_vectors, expanded_centroids)), 2)
+distances = tf.reduce_sum(tf.square(tf.subtract(expanded_vectors, expanded_centroids)), 2)
 assignments = tf.argmin(distances, 0)
 
 
-means = tf.concat(0, [
-  tf.reduce_mean(
-      tf.gather(vectors, 
-                tf.reshape(
-                  tf.where(
-                    tf.equal(assignments, c)
-                  ),[1,-1])
-               ),reduction_indices=[1])
-  for c in xrange(num_clusters)])
+means = tf.concat([tf.reduce_mean(tf.gather(vectors, tf.reshape(tf.where(tf.equal(assignments, c)),[1,-1])),reduction_indices=[1]) for c in xrange(num_clusters)], 0)
 
 update_centroids = tf.assign(centroids, means)
 init_op = tf.initialize_all_variables()
